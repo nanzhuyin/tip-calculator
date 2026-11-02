@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Calculate a tip, the total bill, and the amount each person pays.">
+  <title>Tip Calculator</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #243a33;
+      background: #f0f4ef;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      margin: 0;
+      padding: 40px 20px;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(ellipse at top left, #e2eee5, transparent 65%), #f0f4ef;
+    }
+    .card {
+      width: 100%;
+      max-width: 480px;
+      padding: 36px;
+      background: #fffefa;
+      border: 1px solid #dce5dc;
+      border-radius: 24px;
+      box-shadow: 0 16px 48px #25483412;
+    }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: #476657;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0 0 10px; font-size: clamp(28px, 7vw, 34px); letter-spacing: -0.04em; }
+    .intro { margin: 0 0 28px; color: #59685e; line-height: 1.6; font-size: 15px; }
+    .field { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 650; }
+    input, select, button { font: inherit; }
+    input, select {
+      width: 100%;
+      min-height: 50px;
+      border: 1px solid #aebfb1;
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #243a33;
+      background: white;
+    }
+    input::placeholder { color: #758176; }
+    :focus-visible { outline: 3px solid #468266; outline-offset: 3px; }
+    input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #ab3c30; }
+    .hint { margin: 7px 0 0; color: #657168; font-size: 12px; line-height: 1.5; }
+    .error { margin: 7px 0 0; color: #a12e24; font-size: 13px; line-height: 1.5; }
+    .error:empty { display: none; }
+    button {
+      width: 100%;
+      min-height: 52px;
+      padding: 14px;
+      border: 0;
+      border-radius: 10px;
+      background: #245c43;
+      color: white;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    button:hover { background: #184a34; }
+    button:active { transform: translateY(1px); }
+    .results { margin-top: 28px; border-top: 1px solid #dce5dc; padding-top: 24px; }
+    h2 { margin: 0 0 16px; font-size: 15px; }
+    dl { margin: 0; }
+    .result-row { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+    dt { color: #59685e; }
+    dd { margin: 0; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .per-person { margin: 18px 0 12px; padding: 18px 16px; border-radius: 12px; background: #edf4ec; align-items: center; }
+    .per-person dt { color: #245c43; font-weight: 600; }
+    .per-person dd { color: #245c43; font-size: 30px; letter-spacing: -0.04em; }
+    .footnote { margin: 0; color: #657168; font-size: 12px; line-height: 1.6; }
+    [hidden] { display: none !important; }
+    @media (max-width: 400px) {
+      body { padding: 20px 12px; }
+      .card { padding: 26px 22px; border-radius: 18px; }
+    }
+  </style>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">A little help with the bill</p>
+    <h1>Tip Calculator</h1>
+    <p class="intro">Choose a tip and split the total. Everyone gets a clear share.</p>
+
+    <!-- Input for bill amount, dropdown for tip percent 10 15 20,
+         number of people, a Calculate button, and a result area. -->
+    <form id="tip-form" novalidate>
+      <div class="field">
+        <label for="bill">Bill amount ($)</label>
+        <input id="bill" name="bill" type="number" min="0" step="0.01"
+          inputmode="decimal" placeholder="e.g. 80.00" required
+          aria-describedby="bill-hint bill-error">
+        <p class="hint" id="bill-hint">Enter the bill before the tip, using up to 2 decimal places.</p>
+        <p class="error" id="bill-error"></p>
+      </div>
+      <div class="field">
+        <label for="tip">Tip percentage</label>
+        <select id="tip" name="tip" aria-describedby="tip-error">
+          <option value="10">10%</option>
+          <option value="15" selected>15%</option>
+          <option value="20">20%</option>
+        </select>
+        <p class="error" id="tip-error"></p>
+      </div>
+      <div class="field">
+        <label for="people">Number of people</label>
+        <input id="people" name="people" type="number" min="1" step="1"
+          inputmode="numeric" value="1" required aria-describedby="people-error">
+        <p class="error" id="people-error"></p>
+      </div>
+      <button type="submit">Calculate</button>
+      <p id="form-error" class="error" role="alert"></p>
+    </form>
+
+    <section class="results" id="results" aria-live="polite" aria-atomic="true" hidden>
+      <h2>Your bill, shared</h2>
+      <dl>
+        <div class="result-row"><dt>Tip amount</dt><dd id="tip-amount"></dd></div>
+        <div class="result-row"><dt>Total including tip</dt><dd id="total-amount"></dd></div>
+        <div class="result-row per-person"><dt>Per person</dt><dd id="per-person"></dd></div>
+      </dl>
+      <p class="footnote">Amounts are rounded to 2 decimals. Rounding may leave a small difference when shares are added.</p>
+    </section>
+    <noscript><p class="error">Please enable JavaScript in your browser to use the calculator.</p></noscript>
+  </main>
+</body>
+</html>
